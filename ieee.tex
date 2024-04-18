@@ -1,0 +1,28 @@
+\documentclass{article}
+
+\begin{document}
+\section{First Section}
+\nocite{*}
+aaa \cite{abrahams1997role} bbb\cite{phelan1996have} ccc\cite{mahdavi2007incorporating}
+
+\bibliography{bibbook} %bibfile_name
+\bibliographystyle{ieeetr}
+
+
+\begin{thebibliography}{99}
+\normalsize\addtolength{\itemsep}{-1em}
+\vspace {1.5mm}
+
+\bibitem[1]{1}
+M. Abrahams and M. Kattenfeld, The role of turbidity as a constraint on predator-prey interactions in aquatic environments, \emph{Behav. Ecol. Sociobiol.,} vol. 40, no. 3, pp.169-174, Mar. 1997. \textbf{(Journal style):article}
+
+\bibitem[4]{4}
+J. C. Phelan, B. G. Link, A. Stueve, and B. A. Pescosolido, Have public conceptions of mental health changed in the past half century? Does it matter? presented at the 124th Annu. Meeting American Public Health Association, New York, USA, 1969. \textbf{(Paper presented at conferences style):inproceedings}
+
+\bibitem[5]{5}
+A. Mahdavi and B. Spasojevic, Incorporating simulation into building systems control logic, in \emph{Proc. 10th Int. Building Performance Simulation Association Conf.}, Beijing, China, 2007, pp. 1175-1181. \textbf{(Paper in proceedings style):article}
+
+
+\end{thebibliography}
+
+\end{document}
