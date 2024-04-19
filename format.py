@@ -6,27 +6,29 @@ bib_path = r"./bibbook.bib"
 tex_path = r'./bdma.tex'
 cite_cmd = 'cite'
 
+_cite_start_idx = len(cite_cmd) +2
+
 if os.path.exists(bbl_path+".old"):
     print("Read from .old bbl file ? Default Y [Y/n]:")
     if input().upper()!="N":
-        file = open(bbl_path+".old", "r")
+        file = open(bbl_path+".old", "r", encoding='UTF-8')
         bbl_info = file.read()
         file.close()
     else: 
-        file = open(bbl_path, "r")
+        file = open(bbl_path, "r", encoding='UTF-8')
         bbl_info = file.read()
         file.close()
 else:
-    file = open(bbl_path, "r")
+    file = open(bbl_path, "r", encoding='UTF-8')
     bbl_info = file.read()
     file.close()
 
-file = open(bib_path, "r")
+file = open(bib_path, "r", encoding='UTF-8')
 bib_info = file.read()
 file.close()
 
 
-file = open(tex_path, "r")
+file = open(tex_path, "r", encoding='UTF-8')
 tex_info = file.read()
 file.close()
 
@@ -63,7 +65,7 @@ def code_authors(_authors):
 
 bib_idx = []
 re_bib_head = r'@[^{]*'
-re_bib_author = r'author=\{[^\n]*\}'
+re_bib_author = r'(?i)author\s*=\s*\{[^\n]*\n'
 for match in re.finditer(re_bib_head, bib_info):
     bib_idx += [match.start(),match.end()]
     # print("st match start index", match.start(), "End index", match.end())
@@ -73,14 +75,22 @@ for i in range(len(bib_idx)//2):
     cont = bib_info[bib_idx[2*i] : bib_idx[2*i+1]]
     # print(cont)
     key = cont.split(",")[0][1:]
-    author = re.search(re_bib_author, cont).group()[8:-1]
-    # title = re.search(re_bib_title, cont).group()[7:-1]
-    authors = author.split("and")
-    cnt = len(authors)
-    authors = code_authors(authors)
-    # print(authors)
-    bib_dict[key] = [authors,cnt]
-    
+    _res_author = re.search(re_bib_author, cont)    
+    if _res_author is None:
+        bib_dict[key] = [None,0]
+    else:
+        # print(_res_author.group())
+        # author = _res_author.group()[8:-1]
+        author = _res_author.group()
+        author = author[author.index("{")+1:author.rindex("}")]
+        # author = author[:author.index("}")]
+        # print(author)
+        # title = re.search(re_bib_title, cont).group()[7:-1]
+        authors = author.split("and")
+        cnt = len(authors)
+        authors = code_authors(authors)
+        # print(authors)
+        bib_dict[key] = [authors,cnt]
 # exit()
 
 # 2. Refine bbl content
@@ -100,8 +110,10 @@ bbl_idx = []
 
 for match in re.finditer(re_bbl_item, bbl_info):
     bbl_idx += [match.start(),match.end()]
+    # print(bbl_info[match.start():match.end()])
 # bbl_head = bbl_info[:bbl_idx[0]]
 # bbl_tail = bbl_info[bbl_idx[-1]:]
+# exit()
 
 bbl_idx = bbl_idx[1:] + [-1]
 bbl_dict={}
@@ -111,6 +123,10 @@ for i in range(len(bbl_idx)//2):
     cont = " ".join(cont.replace("\n"," ").split())
     key = cont.split("}")[0]
     fixed_author, cnt = bib_dict[key]
+    if cnt ==0:
+        bbl_dict[key] = [None, cont.split("}")[1]]
+        continue
+    
     if cnt <= 2:
         author_end = cont.find(",")
     else:
@@ -122,16 +138,20 @@ for i in range(len(bbl_idx)//2):
             author_end = match.end()
             break
     bbl_dict[key] = [fixed_author,cont[author_end:]]
-    # res= "\\bibitem{%s} \n %s%s \n\n"%(key,fixed_author,cont[author_end:])
-    # new_bbl += res
 
 # 3. Read texfile for used references
 re_cite=r'\\%s\{[^{}]*\}'%cite_cmd
 
 for match in re.finditer(re_cite, tex_info):
-    key=tex_info[match.start():match.end()][6:-1]
-    res= "\\bibitem{%s} \n %s%s \n\n"%(key,bbl_dict[key][0],bbl_dict[key][1])
-    new_bbl += res
+    keys=tex_info[match.start():match.end()][_cite_start_idx:-1]
+    for key in keys.split(","):
+        key = key.strip()
+        fixed_author, cnt = bbl_dict[key][0],bbl_dict[key][1]
+        if fixed_author is None:
+            res="\\bibitem{%s} \n %s \n\n"%(key,cnt)
+        else:
+            res= "\\bibitem{%s} \n %s%s \n\n"%(key,fixed_author, cnt)
+        new_bbl += res
 
 new_bbl = bbl_head + "\n\n" + new_bbl + "\n\n" + bbl_tail
 bbl_info = bbl_head + "\n\n" + bbl_info + "\n\n" + bbl_tail
@@ -142,10 +162,10 @@ bbl_info = bbl_head + "\n\n" + bbl_info + "\n\n" + bbl_tail
 # 3. Save olb bbl to .old one, and overwrite to bbl
 # exit()
 
-file = open(bbl_path+".old", "w")
+file = open(bbl_path+".old", "w", encoding='UTF-8')
 file.write(bbl_info)
 file.close()
 
-file = open(bbl_path, "w")
+file = open(bbl_path, "w", encoding='UTF-8')
 file.write(new_bbl)
 file.close()

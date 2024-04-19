@@ -38,6 +38,7 @@ ENTRY
     type
     volume
     year
+    url
   }
   {}
   { label }
@@ -794,6 +795,7 @@ FUNCTION {misc}
     }
   if$
   howpublished output
+  url output
   format.date output
   new.block
   note output
