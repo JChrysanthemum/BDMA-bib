@@ -1,8 +1,10 @@
 import re
 import os
 
-bbl_path=r"./bdma.bbl"
-bib_path=r"./bibbook.bib"
+bbl_path = r"./bdma.bbl"
+bib_path = r"./bibbook.bib"
+tex_path = r'./bdma.tex'
+cite_cmd = 'cite'
 
 if os.path.exists(bbl_path+".old"):
     print("Read from .old bbl file ? Default Y [Y/n]:")
@@ -21,6 +23,11 @@ else:
 
 file = open(bib_path, "r")
 bib_info = file.read()
+file.close()
+
+
+file = open(tex_path, "r")
+tex_info = file.read()
 file.close()
 
 # 1. Read author in bib
@@ -97,6 +104,7 @@ for match in re.finditer(re_bbl_item, bbl_info):
 # bbl_tail = bbl_info[bbl_idx[-1]:]
 
 bbl_idx = bbl_idx[1:] + [-1]
+bbl_dict={}
 
 for i in range(len(bbl_idx)//2):
     cont = bbl_info[bbl_idx[2*i] : bbl_idx[2*i+1]].strip()
@@ -113,8 +121,16 @@ for i in range(len(bbl_idx)//2):
                 continue
             author_end = match.end()
             break
+    bbl_dict[key] = [fixed_author,cont[author_end:]]
+    # res= "\\bibitem{%s} \n %s%s \n\n"%(key,fixed_author,cont[author_end:])
+    # new_bbl += res
 
-    res= "\\bibitem{%s} \n %s%s \n\n"%(key,fixed_author,cont[author_end:])
+# 3. Read texfile for used references
+re_cite=r'\\%s\{[^{}]*\}'%cite_cmd
+
+for match in re.finditer(re_cite, tex_info):
+    key=tex_info[match.start():match.end()][6:-1]
+    res= "\\bibitem{%s} \n %s%s \n\n"%(key,bbl_dict[key][0],bbl_dict[key][1])
     new_bbl += res
 
 new_bbl = bbl_head + "\n\n" + new_bbl + "\n\n" + bbl_tail

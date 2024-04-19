@@ -10,9 +10,9 @@ BDMA has typical ref style which have a big difference with other journal (ieee,
 
 Here is the step:
 
-* Paste your `\document{...}` code into [bdma.tex](bdma.tex), compile it with tex and bibtex. (xelatex->biblatex->xelatex->xelatex)
+* Paste your `\document{...}` code into [bdma.tex](bdma.tex), should contain `\bibliography` and `\bibliographystyle` to generate bbl.Then compile it with tex and bibtex. (xelatex->biblatex->xelatex->xelatex)
 * Run [format.py](format.py) to fix the author format of bbl file.
-* Compile tex file without bibtex (xelatex), copy `\bibitem` in bbl into your tex and recompile it.
+* Use `\begin{thebibliography}` and copy `\bibitem` in bbl into your tex, comment `\bibliography` and `\bibliographystyle`, recompile it without bibtex (xelatex).
 
 # 2. Note 
 
