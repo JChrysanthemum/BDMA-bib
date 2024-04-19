@@ -42,7 +42,7 @@ def code_authors(_authors):
         if a.find(",")>=0:
             sur, gv = a.split(",")
             sur, gv = sur.strip(), gv.strip()
-            res = re.search(r'[A-Z]+',gv)
+            res = re.search(r'[A-Z.]+',gv)
             if res.end() == len(gv):
                 out = ".".join(gv) + "." + " " + sur
             else:
@@ -64,7 +64,10 @@ def code_authors(_authors):
             # print(a)
             # print(sur,"||", gv)
             res = re.search(r'[A-Z]+',sur)
-            if res.end() == len(sur):
+            if sur.find(".")>=0:
+                print(sur, gv)
+                out = sur + " " + gv
+            elif res.end() == len(sur):
                 out = ".".join(sur) + "." + " " + gv
             else:
                 if gv[0] == "{":
@@ -88,8 +91,8 @@ def code_authors(_authors):
     else:
         res = rt[0]
         for i in range(len(rt) - 2):
-            res += " and " + rt[i+1]
-        res += ", " + rt[-1]
+            res += ", " + rt[i+1]
+        res += " and " + rt[-1]
     return res
 
 bib_idx = []
