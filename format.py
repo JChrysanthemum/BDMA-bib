@@ -5,7 +5,6 @@ bbl_path = r"./bdma.bbl"
 bib_path = r"./bibbook.bib"
 tex_path = r'./bdma.tex'
 cite_cmd = 'cite'
-
 _cite_start_idx = len(cite_cmd) +2
 
 if os.path.exists(bbl_path+".old"):
@@ -38,18 +37,48 @@ bib_dict = {}
 def code_authors(_authors):
     rt = []
     for a in _authors:
-        
+        # print("|-","".join(a),"-|")
+        a = a.strip()
         if a.find(",")>=0:
-            gv, sur = a.split(",")
-            gv, sur = gv.strip(), sur.strip()
+            sur, gv = a.split(",")
+            sur, gv = sur.strip(), gv.strip()
+            res = re.search(r'[A-Z]+',gv)
+            if res.end() == len(gv):
+                out = ".".join(gv) + "." + " " + sur
+            else:
+                if gv[0] == "{":
+                    # escape character like {\'c}
+                    res = re.search(r'\{[^{}]*\}', gv) 
+                    if res is None:
+                        # {} words
+                        res = re.search(r'\{[a-zA-Z]', gv)
+                        out = gv[res.end()-1].upper() + ". " + sur
+                    else:
+                        out = gv[:res.end()].upper() + ". " + sur
+                else:
+                    out = gv[0].upper() + ". " + sur
+        elif a.find(" ")>=0:
+            blk_idx = a.index(" ")
+            # sur, gv = a[blk_idx:].strip(), a[:blk_idx].strip()
+            sur, gv = a[:blk_idx].strip(), a[blk_idx:].strip()
+            # print(a)
+            # print(sur,"||", gv)
             res = re.search(r'[A-Z]+',sur)
-            # print(sur,res.start(),res.end(),len(sur))
-            
             if res.end() == len(sur):
                 out = ".".join(sur) + "." + " " + gv
             else:
-                out = sur[0] + ". " + gv
-        else: 
+                if gv[0] == "{":
+                    # escape character like {\'c}
+                    res = re.search(r'\{\\[^{}]*\}', gv) 
+                    if res is None:
+                        # {} words
+                        res = re.search(r'\{[a-zA-Z]', gv)
+                        out = gv[res.end()-1].upper() + ". " + sur
+                    else:
+                        out = gv[:res.end()].upper() + ". " + sur
+                else:
+                    out = gv[0].upper() + ". " + sur
+        else:
             out = a.strip()
         rt.append(out)
     if len(rt) == 1:
@@ -79,17 +108,16 @@ for i in range(len(bib_idx)//2):
     if _res_author is None:
         bib_dict[key] = [None,0]
     else:
-        # print(_res_author.group())
-        # author = _res_author.group()[8:-1]
         author = _res_author.group()
         author = author[author.index("{")+1:author.rindex("}")]
-        # author = author[:author.index("}")]
-        # print(author)
-        # title = re.search(re_bib_title, cont).group()[7:-1]
-        authors = author.split("and")
+        authors = author.split(" and ")
         cnt = len(authors)
         authors = code_authors(authors)
-        # print(authors)
+        # if author.find("{")>=0:
+        #     print(author)
+        #     print("-"*30)
+        #     print(authors)
+        #     print("*"*30)
         bib_dict[key] = [authors,cnt]
 # exit()
 
@@ -141,10 +169,14 @@ for i in range(len(bbl_idx)//2):
 
 # 3. Read texfile for used references
 re_cite=r'\\%s\{[^{}]*\}'%cite_cmd
+done = []
 
 for match in re.finditer(re_cite, tex_info):
     keys=tex_info[match.start():match.end()][_cite_start_idx:-1]
     for key in keys.split(","):
+        if key in done:
+            continue
+        done.append(key)
         key = key.strip()
         fixed_author, cnt = bbl_dict[key][0],bbl_dict[key][1]
         if fixed_author is None:
@@ -152,6 +184,7 @@ for match in re.finditer(re_cite, tex_info):
         else:
             res= "\\bibitem{%s} \n %s%s \n\n"%(key,fixed_author, cnt)
         new_bbl += res
+            
 
 new_bbl = bbl_head + "\n\n" + new_bbl + "\n\n" + bbl_tail
 bbl_info = bbl_head + "\n\n" + bbl_info + "\n\n" + bbl_tail
